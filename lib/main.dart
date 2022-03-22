@@ -1,9 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:pingme/authentication/login.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'authentication/firebase_options.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pingme/authentication/login.dart';
+import 'package:pingme/home.dart';
 
 // CSCI 430: pingme
 // Name: Jorge Munoz, put your names here
@@ -11,7 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Jorge: Login with authentication is done. SucessPage() is a dummy
 //        home page I created. This is what needs to be replaced.
 
-// TODO(mvp): Get a home page with google maps intigration.
+// ~TODO(mvp): Get a home page with google maps intigration.
 // TODO: Bottom menu bar to navigate between pages
 // TODO: Friends page
 // TODO: ????
@@ -40,7 +41,7 @@ class StartupLogic {
         builder: (BuildContext ctx, snapshot) {
           if (snapshot.hasData) {
             //todo: replace with real homepage
-            return const SuccessPage();
+            return const HomePage();
           }
           return const LoginPage();
         });
@@ -61,8 +62,6 @@ class _MyAppState extends State<MyApp> {
         home: StartupLogic().getLandingPage(context));
   }
 }
-
-
 
 // DUMMY HOME PAGE
 class SuccessPage extends StatefulWidget {
