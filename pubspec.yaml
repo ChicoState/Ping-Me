@@ -1,5 +1,5 @@
 name: pingme
-description: A new Flutter project.
+description: A location sharing application to let your friends and family know where you are!
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -30,11 +30,22 @@ dependencies:
   flutter:
     sdk: flutter
 
+  todo: ^2.0.1
+
+  # Firebase
+  firebase_core: ^1.13.1
+  firebase_auth: ^3.3.11
+
+  # Google Maps
+  google_maps_flutter: ^2.1.2
+
+  # Shared Preferences
+  shared_preferences: ^2.0.13
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  google_maps_flutter: ^2.1.2
+  provider: ^6.0.2
 
 dev_dependencies:
   flutter_test:
