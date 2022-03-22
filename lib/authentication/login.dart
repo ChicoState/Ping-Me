@@ -1,6 +1,7 @@
 import 'package:pingme/authentication/signup.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:pingme/home.dart';
 import 'package:pingme/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -100,7 +101,7 @@ class _LoginPageState extends State<LoginPage> {
                             Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(    //todo: replace with real home page
-                                    builder: (context) => const SuccessPage()));
+                                    builder: (context) => const HomePage()));
                           } on FirebaseAuthException {
                             _errorLogin = true;
                             setState(() {});
