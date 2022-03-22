@@ -25,8 +25,12 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Ping-Me'),
-          backgroundColor: Colors.lightBlue,
+          backgroundColor: Colors.blue,
           centerTitle: true,
+          leading: IconButton(
+            onPressed: () {},
+            icon: Icon(Icons.settings),
+          )
         ),
         body: GoogleMap(
           onMapCreated: _onMapCreated,
@@ -35,6 +39,21 @@ class _MyAppState extends State<MyApp> {
             zoom: 11.0,
           ),
         ),
+        bottomNavigationBar: BottomAppBar(
+          shape: CircularNotchedRectangle(),
+          notchMargin: 6.0,
+          color: Colors.blue,
+          child: Row(
+            children: [
+              //IconButton(icon: Icon(Icons.menu), onPressed: () {}),
+              Spacer(),
+              IconButton(icon: Icon(Icons.perm_identity_outlined, color: Colors.white), onPressed: () {}),
+            ],
+          ),
+        ),
+        floatingActionButton:
+        FloatingActionButton(child: Icon(Icons.public), onPressed: () {}),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
     );
   }
