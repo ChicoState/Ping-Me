@@ -1,19 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:pingme/authentication/login.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart'; 
 import 'authentication/firebase_options.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pingme/authentication/login.dart';
 
 // CSCI 430: pingme
-// Name: Jorge Munoz, put your names here
+// Names: Jorge Munoz,
 
-// Jorge: Login with authentication is done. SucessPage() is a dummy
-//        home page I created. This is what needs to be replaced.
-
-// TODO(mvp): Get a home page with google maps intigration.
-// TODO: Bottom menu bar to navigate between pages
+// ~TODO(mvp): Get a home page with google maps intigration.
+// ~TODO: Bottom menu bar to navigate between pages
 // TODO: Friends page
+// TODO: location plugin
 // TODO: ????
 
 Future<void> main() async {
@@ -26,25 +23,8 @@ Future<void> main() async {
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
-
   @override
   _MyAppState createState() => _MyAppState();
-}
-
-class StartupLogic {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  Widget getLandingPage(BuildContext ctx) {
-    return StreamBuilder<User?>(
-        stream: _auth.authStateChanges(),
-        builder: (BuildContext ctx, snapshot) {
-          if (snapshot.hasData) {
-            //todo: replace with real homepage
-            return const SuccessPage();
-          }
-          return const LoginPage();
-        });
-  }
 }
 
 // This widget is the root of your application.
@@ -137,5 +117,6 @@ class _SuccessPage extends State<SuccessPage> {
                 ))
           ],
         )));
+        home: const LoginPage());
   }
 }
