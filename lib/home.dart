@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -10,10 +11,18 @@ class HomePage extends StatefulWidget {
 
 class _HomeState extends State<HomePage> {
   late GoogleMapController mapController;
-  final LatLng _center = const LatLng(45.521563, -122.677433);
+  LatLng initcamposition = LatLng(45.521563, -122.677433);
+  Location location = Location();
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
+    location.onLocationChanged.listen((l) {
+      mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: LatLng(l.latitude!, l.longitude!),zoom: 16),
+        ),
+      );
+    });
   }
 
   @override
@@ -25,15 +34,16 @@ class _HomeState extends State<HomePage> {
             backgroundColor: Colors.blue,
             centerTitle: true,
             leading: IconButton(
+            icon: const Icon(Icons.settings),
               onPressed: () {},
-              icon: const Icon(Icons.settings),
             )),
         body: GoogleMap(
           onMapCreated: _onMapCreated,
           initialCameraPosition: CameraPosition(
-            target: _center,
-            zoom: 11.0,
+            target: initcamposition,
+            zoom: 1.0,
           ),
+          myLocationEnabled: true,
         ),
         bottomNavigationBar: BottomAppBar(
           shape: const CircularNotchedRectangle(),
