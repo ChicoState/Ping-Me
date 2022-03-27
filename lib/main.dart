@@ -31,7 +31,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'pingme',
+        title: 'PingMe',
         theme: ThemeData(
             primarySwatch: Colors.blue,
             // Setting the color for all Text widgets

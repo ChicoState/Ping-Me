@@ -1,14 +1,12 @@
-import 'package:pingme/authentication/signup.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:pingme/home.dart';
-import 'package:pingme/main.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pingme/home.dart';
+import 'package:pingme/authentication/signup.dart';
 
 // LOGIN PAGE CLASS
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
-
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -24,7 +22,8 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: const Text('pingme: Login Page'),
+        title: const Text('PingMe'),
+        centerTitle: true,
       ),
       body: Center(
         child: Column(
@@ -100,7 +99,8 @@ class _LoginPageState extends State<LoginPage> {
                             prefs.setString('userEmail', emailController.text);
                             Navigator.pushReplacement(
                                 context,
-                                MaterialPageRoute(    //todo: replace with real home page
+                                MaterialPageRoute(
+                                    //todo: replace with real home page
                                     builder: (context) => const HomePage()));
                           } on FirebaseAuthException {
                             _errorLogin = true;

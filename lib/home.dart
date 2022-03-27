@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:pingme/friends.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:pingme/authentication/login.dart';
 import 'package:location/location.dart';
 
 class HomePage extends StatefulWidget {
@@ -29,7 +32,7 @@ class HomeState extends State<HomePage> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-            title: const Text('Ping-Me'), //title header
+            title: const Text('PingMe'),
             backgroundColor: Colors.blue,
             centerTitle: true,
             leading: IconButton( //settings button
@@ -51,11 +54,29 @@ class HomeState extends State<HomePage> {
           color: Colors.blue,
           child: Row(
             children: [
+              IconButton(
+                icon: const Icon(Icons.logout_rounded),
+                color: Colors.white,
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  setState(() {});
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const LoginPage()));
+                },
+              ),
               const Spacer(), //allow for friends icon to appear right side
+
               IconButton(
                   icon: const Icon(Icons.perm_identity_outlined, //friends button
                       color: Colors.white),
-                  onPressed: () {}),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const FriendsPage()));
+                  }),
             ],
           ),
         ),
