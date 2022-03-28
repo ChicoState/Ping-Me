@@ -38,6 +38,7 @@ dependencies:
 
   # Google Maps
   google_maps_flutter: ^2.1.2
+  location: ^4.2.0
 
   # Shared Preferences
   shared_preferences: ^2.0.13
