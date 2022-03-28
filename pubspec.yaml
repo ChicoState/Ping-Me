@@ -35,6 +35,7 @@ dependencies:
   # Firebase
   firebase_core: ^1.13.1
   firebase_auth: ^3.3.11
+  cloud_firestore: ^3.1.10 # allows for 'package:cloud_firestore/cloud_firestore.dart'
 
   # Google Maps
   google_maps_flutter: ^2.1.2
