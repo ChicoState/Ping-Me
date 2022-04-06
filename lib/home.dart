@@ -4,6 +4,7 @@ import 'package:pingme/friends.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pingme/authentication/login.dart';
 import 'package:location/location.dart';
+import 'package:pingme/settings.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -37,7 +38,12 @@ class HomeState extends State<HomePage> {
             centerTitle: true,
             leading: IconButton( //settings button
             icon: const Icon(Icons.settings),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const Settings()));
+              },
             )
         ),
         body: GoogleMap(
