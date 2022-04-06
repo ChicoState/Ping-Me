@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:pingme/services/database.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -16,6 +15,8 @@ class _SignUpPageState extends State<SignUpPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final passwordController2 = TextEditingController();
+  final firestoreInstance = FirebaseFirestore.instance;
+
   // ERROR CODES
   bool _incompleteForm = false;
   bool _passMismatch = false;
@@ -112,6 +113,12 @@ class _SignUpPageState extends State<SignUpPage> {
                         _passMismatch =
                             passwordController.text != passwordController2.text;
                         // IF PASSWORDS MATCH
+                        // final CollectionReference userCollection =
+                        //     FirebaseFirestore.instance.collection("userEmails");
+                        firestoreInstance.collection("userEmails").add({
+                          "email": emailController.text,
+                        });
+
                         if (!_incompleteForm && !_passMismatch) {
                           try {
                             await FirebaseAuth.instance

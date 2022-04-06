@@ -1,4 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'authentication/firebase_options.dart';
@@ -6,12 +7,7 @@ import 'package:pingme/authentication/login.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // CSCI 430: pingme
-// Names: Jorge Munoz, Crispin Gutierrez, Cole Hopkins, Braulio Viveros
-// ~TODO(mvp): Get a home page with google maps intigration.
-// ~TODO: Bottom menu bar to navigate between pages
-// TODO: Friends page
-// TODO: location plugin
-// TODO: ????
+// Names: Jorge Munoz,
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +25,8 @@ class MyApp extends StatefulWidget {
 
 // This widget is the root of your application.
 class _MyAppState extends State<MyApp> {
+  CollectionReference users = FirebaseFirestore.instance.collection('Users');
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

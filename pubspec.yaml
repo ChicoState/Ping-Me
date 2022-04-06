@@ -33,9 +33,9 @@ dependencies:
   todo: ^2.0.1
 
   # Firebase
-  firebase_core: ^1.13.1
-  firebase_auth: ^3.3.11
-  cloud_firestore: ^3.1.10 # allows for 'cloud_firestore' package to be used throughout projectt 
+  firebase_core: ^1.14.0
+  firebase_auth: ^3.3.12
+  cloud_firestore: ^3.1.11 # allows for 'cloud_firestore' package to be used throughout projectt 
 
   # Google Maps
   google_maps_flutter: ^2.1.2
@@ -73,8 +73,8 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+    # - images/a_dot_burr.jpeg
+    # - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
