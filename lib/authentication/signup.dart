@@ -113,11 +113,6 @@ class _SignUpPageState extends State<SignUpPage> {
                         _passMismatch =
                             passwordController.text != passwordController2.text;
                         // IF PASSWORDS MATCH
-                        firestoreInstance.collection("userEmails").add(
-                        {
-                        "email" : emailController.text,
-                        }
-                        );
 
                         if (!_incompleteForm && !_passMismatch) {
                           try {
@@ -126,6 +121,9 @@ class _SignUpPageState extends State<SignUpPage> {
                                     email: emailController.text,
                                     password: passwordController.text);
                             _weakPass = _emailUsed = _emailInvalid = false;
+                            var firebaseUser = FirebaseAuth.instance.currentUser;
+                            if(firebaseUser != null)
+                              await firestoreInstance.collection("userEmails").doc(firebaseUser.uid).set({"email" : emailController.text,});
                             setState(() {});
                             Navigator.pop(context);
                           } on FirebaseAuthException catch (e) {
