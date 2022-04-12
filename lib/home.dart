@@ -36,7 +36,7 @@ class HomeState extends State<HomePage> {
             backgroundColor: Colors.blue,
             centerTitle: true,
             leading: IconButton( //settings button
-            icon: const Icon(Icons.settings),
+              icon: const Icon(Icons.settings),
               onPressed: () {},
             )
         ),
