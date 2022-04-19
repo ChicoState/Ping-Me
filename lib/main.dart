@@ -40,4 +40,3 @@ class _MyAppState extends State<MyApp> {
         home: const LoginPage());
   }
 }
-
