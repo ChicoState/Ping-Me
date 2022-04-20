@@ -49,6 +49,8 @@ dependencies:
   provider: ^6.0.2
   geolocator: ^8.2.0
   cloud_firestore: ^3.1.12
+  geoflutterfire: ^3.0.3
+  rxdart: ^0.27.3
 
 dev_dependencies:
   flutter_test:
