@@ -26,7 +26,7 @@ class HomeState extends State<HomePage> {
   late GoogleMapController mapController; //load google apps function from google_maps_flutter plugin
   LatLng initcamposition = const LatLng(45.521563, -122.677433); //default cam position
   Location location = Location(); //enable location tracking from user device using location plugin
-  final firestoreInstance = FirebaseFirestore.instance;
+  final firestoreinstance = FirebaseFirestore.instance;
   //final CollectionReference users = FirebaseFirestore.instance.collection('userEmails');
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
 
@@ -37,8 +37,8 @@ class HomeState extends State<HomePage> {
   }
 
   void initMarker(specify, specifyId) async{
-    var MarkerIdvalue = specifyId;
-    final MarkerId markerId = MarkerId(MarkerIdvalue);
+    var markeridvalue = specifyId;
+    final MarkerId markerId = MarkerId(markeridvalue);
     final Marker marker = Marker(
       markerId: markerId,
       position: LatLng(specify['location'].latitude, specify['location'].longitude),
@@ -50,12 +50,9 @@ class HomeState extends State<HomePage> {
   }
 
   getMarkerData() async{
-    FirebaseFirestore.instance.collection('userEmails').get().then((myMarkers)
-    {
-      if(myMarkers.docs.isNotEmpty)
-      {
-          for(int i = 0; i < myMarkers.docs.length; i++)
-          {
+    FirebaseFirestore.instance.collection('userEmails').get().then((myMarkers) {
+      if(myMarkers.docs.isNotEmpty) {
+          for(int i = 0; i < myMarkers.docs.length; i++) {
               initMarker(myMarkers.docs[i].data, myMarkers.docs[i].id);
           }
       }
@@ -76,24 +73,27 @@ class HomeState extends State<HomePage> {
     });
   }
 
+  static const Marker _test = Marker(
+    markerId: MarkerId('_test'),
+    position: LatLng(10.0, 20.0),
+    icon: BitmapDescriptor.defaultMarker,
+    infoWindow: InfoWindow(title: 'Chad', snippet:'time: 04/20/2022 11:41'),
+  );
+  static const Marker _test2 = Marker(
+    markerId: MarkerId('_test2'),
+    position: LatLng(39.72770, -121.8467),
+    icon: BitmapDescriptor.defaultMarker,
+    infoWindow: InfoWindow(title: 'Sarah', snippet:'time: 04/17/2022 22:41'),
+  );
+  static const Marker _test3 = Marker(
+    markerId: MarkerId('_test3'),
+    position: LatLng(39.721, -121.8478),
+    icon: BitmapDescriptor.defaultMarker,
+    infoWindow: InfoWindow(title: 'Tony', snippet:'time: 04/18/2022 13:07'),
+  );
+
   @override
   Widget build(BuildContext context) {
-    Set<Marker> getMarker() {
-      return <Marker>[
-        Marker(
-          markerId: MarkerId('User1'),
-          position: LatLng(70.0, 170.0),
-          icon: BitmapDescriptor.defaultMarker,
-          infoWindow: InfoWindow(title: 'HEllo'),
-        ),
-        Marker(
-          markerId: MarkerId('User2'),
-          position: LatLng(72.0, 173.0),
-          icon: BitmapDescriptor.defaultMarker,
-          infoWindow: InfoWindow(title: 'HEll1!'),
-        )
-      ].toSet();
-    }
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
@@ -107,7 +107,8 @@ class HomeState extends State<HomePage> {
             )),
         body: GoogleMap(
           //markers: Set<Marker>.of(markers.values),
-          markers: markers.values.toSet(),
+          markers: {_test, _test2, _test3},
+          //markers: markers.values.toSet(),
           onMapCreated: _onMapCreated, //build map
           initialCameraPosition: CameraPosition(
             target: initcamposition, //initial position
@@ -156,7 +157,7 @@ class HomeState extends State<HomePage> {
               Position geoPosition = await _getGeoLocationPosition();
               var firebaseUser = FirebaseAuth.instance.currentUser;
               if (firebaseUser != null) {
-                await firestoreInstance
+                await firestoreinstance
                     .collection("userEmails")
                     .doc(firebaseUser.uid)
                     .update({
