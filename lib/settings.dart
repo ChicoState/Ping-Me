@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 
 class Settings extends StatefulWidget {
   const Settings({Key? key}) : super(key: key);
@@ -14,7 +14,7 @@ class _SettingsState extends State<Settings> {
         title: const Text('Settings'),
         centerTitle: true,
       ),
-      body: Center(),
+      body: const Center(),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.check),
         onPressed: () {},
