@@ -6,9 +6,6 @@ import 'package:pingme/authentication/login.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-//import 'package:geoflutterfire/geoflutterfire.dart';
-
-// Init firestore and geoFlutterFire
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -22,12 +19,18 @@ Future<Position> _getGeoLocationPosition() async {
 
 class HomeState extends State<HomePage> {
   late GoogleMapController
-      mapController; //load google apps function from google_maps_flutter plugin
-  LatLng initcamposition =
-      const LatLng(45.521563, -122.677433); //default cam position
+      _controller; //load google apps function from google_maps_flutter plugin
+  LatLng initcamposition = LatLng(
+    snapshot.data!.docs
+        .singleWhere((element) => element.id == widget.user_id)['latitude'],
+    snapshot.data!.docs
+        .singleWhere((element) => element.id == widget.user_id)['longitude'],
+  ); //default cam position
+
   Location location =
       Location(); //enable location tracking from user device using location plugin
   final firestoreinstance = FirebaseFirestore.instance;
+
   //final CollectionReference users = FirebaseFirestore.instance.collection('userEmails');
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
 
@@ -61,10 +64,10 @@ class HomeState extends State<HomePage> {
   }
 
   void _onMapCreated(GoogleMapController controller) {
-    mapController = controller; //allow for looking around map
+    _controller = controller; //allow for looking around map
     location.onLocationChanged.listen((l) {
       //listen to user current position
-      mapController.animateCamera(
+      _controller.animateCamera(
         //lock onto user position
         CameraUpdate.newCameraPosition(
           //update if user position changes
