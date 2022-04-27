@@ -37,7 +37,7 @@ class HomeState extends State<HomePage> {
     final Marker marker = Marker(
       markerId: markerId,
       position: LatLng(specify['location'].latitude, specify['location'].longitude),
-      infoWindow: InfoWindow(title: specify['email']/*, snippet: specify['time']*/),
+      infoWindow: InfoWindow(title: specify['email'], snippet: specify['time'].toDate().toString()),
     );
     setState(() {
       markers[markerId] = marker;
@@ -82,8 +82,8 @@ class HomeState extends State<HomePage> {
               onPressed: () {},
             )),
         body: GoogleMap(
-          markers: Set<Marker>.of(markers.values),
-          //markers: markers.values.toSet(),
+          //markers: Set<Marker>.of(markers.values),
+          markers: markers.values.toSet(),
           onMapCreated: _onMapCreated, //build map
           initialCameraPosition: CameraPosition(
             target: initcamposition, //initial position
@@ -138,8 +138,8 @@ class HomeState extends State<HomePage> {
                     .update({
                   'location':
                       GeoPoint(geoPosition.latitude, geoPosition.longitude),
-                  //'time':
-                  //    Timestamp.now(),
+                  'time':
+                      Timestamp.now(),
                 });
               }
               showDialog(
