@@ -144,8 +144,9 @@ class _FriendsPageState extends State<FriendsPage> {
       itemBuilder: (BuildContext context, int index) {
         return SwitchListTile(
 
-            title: Text(friendsList2[index]["username"],),
+            title: Text(friendsList2[index]["username"]),
             value: friendsList2[index]["tracking"],
+            subtitle: friendsList2[index]["location"],
             onChanged: (bool value){
               setState(() {
                 var firebaseUser = FirebaseAuth.instance.currentUser;

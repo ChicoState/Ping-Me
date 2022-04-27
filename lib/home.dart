@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:pingme/friends.dart';
@@ -8,9 +6,6 @@ import 'package:pingme/authentication/login.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-//import 'package:geoflutterfire/geoflutterfire.dart';
-
-// Init firestore and geoFlutterFire
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -42,7 +37,7 @@ class HomeState extends State<HomePage> {
     final Marker marker = Marker(
       markerId: markerId,
       position: LatLng(specify['location'].latitude, specify['location'].longitude),
-      infoWindow: InfoWindow(title: specify['email'])
+      infoWindow: InfoWindow(title: specify['email']/*, snippet: specify['time']*/),
     );
     setState(() {
       markers[markerId] = marker;
@@ -53,7 +48,7 @@ class HomeState extends State<HomePage> {
     FirebaseFirestore.instance.collection('userEmails').get().then((myMarkers) {
       if(myMarkers.docs.isNotEmpty) {
           for(int i = 0; i < myMarkers.docs.length; i++) {
-              initMarker(myMarkers.docs[i].data, myMarkers.docs[i].id);
+              initMarker(myMarkers.docs[i].data(), myMarkers.docs[i].id);
           }
       }
     });
@@ -73,25 +68,6 @@ class HomeState extends State<HomePage> {
     });
   }
 
-  static const Marker _test = Marker(
-    markerId: MarkerId('_test'),
-    position: LatLng(10.0, 20.0),
-    icon: BitmapDescriptor.defaultMarker,
-    infoWindow: InfoWindow(title: 'Chad', snippet:'time: 04/20/2022 11:41'),
-  );
-  static const Marker _test2 = Marker(
-    markerId: MarkerId('_test2'),
-    position: LatLng(39.72770, -121.8467),
-    icon: BitmapDescriptor.defaultMarker,
-    infoWindow: InfoWindow(title: 'Sarah', snippet:'time: 04/17/2022 22:41'),
-  );
-  static const Marker _test3 = Marker(
-    markerId: MarkerId('_test3'),
-    position: LatLng(39.721, -121.8478),
-    icon: BitmapDescriptor.defaultMarker,
-    infoWindow: InfoWindow(title: 'Tony', snippet:'time: 04/18/2022 13:07'),
-  );
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -106,8 +82,7 @@ class HomeState extends State<HomePage> {
               onPressed: () {},
             )),
         body: GoogleMap(
-          //markers: Set<Marker>.of(markers.values),
-          markers: {_test, _test2, _test3},
+          markers: Set<Marker>.of(markers.values),
           //markers: markers.values.toSet(),
           onMapCreated: _onMapCreated, //build map
           initialCameraPosition: CameraPosition(
@@ -162,7 +137,9 @@ class HomeState extends State<HomePage> {
                     .doc(firebaseUser.uid)
                     .update({
                   'location':
-                      GeoPoint(geoPosition.latitude, geoPosition.longitude)
+                      GeoPoint(geoPosition.latitude, geoPosition.longitude),
+                  //'time':
+                  //    Timestamp.now(),
                 });
               }
               showDialog(
@@ -182,15 +159,4 @@ class HomeState extends State<HomePage> {
       ),
     );
   }
-  /*
-  _getCurrentLocation() {
-    Geolocator
-        .getCurrentPosition(desiredAccuracy: LocationAccuracy.best, forceAndroidLocationManager: true)
-        .then((Position position) {
-      setState(() {
-        _currentPosition = position;
-      });
-    });
-  }
-  */
 }
