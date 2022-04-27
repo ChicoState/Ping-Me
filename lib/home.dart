@@ -37,7 +37,7 @@ class HomeState extends State<HomePage> {
     final Marker marker = Marker(
       markerId: markerId,
       position: LatLng(specify['location'].latitude, specify['location'].longitude),
-      infoWindow: InfoWindow(title: specify['email'])
+      infoWindow: InfoWindow(title: specify['email']/*, snippet: specify['time']*/),
     );
     setState(() {
       markers[markerId] = marker;
@@ -137,7 +137,9 @@ class HomeState extends State<HomePage> {
                     .doc(firebaseUser.uid)
                     .update({
                   'location':
-                      GeoPoint(geoPosition.latitude, geoPosition.longitude)
+                      GeoPoint(geoPosition.latitude, geoPosition.longitude),
+                  //'time':
+                  //    Timestamp.now(),
                 });
               }
               showDialog(
