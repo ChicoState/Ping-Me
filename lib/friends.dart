@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-//firestore class
+// firestore class
 
 class FireStoreDataBase {
   List friendList = [];
@@ -45,8 +45,9 @@ class _FriendsPageState extends State<FriendsPage> {
   bool _incompleteForm = false;
   bool _friendDoesNotExist = false;
   String friendUID = '';
-  // FRIEND LIST ENTRY WIDGET FUNCTION
   bool _switch = false;
+
+  // FRIEND LIST ENTRY WIDGET FUNCTION
   Widget friendEntry(String entry) => SwitchListTile(
         title: Text(entry, style: const TextStyle(color: Colors.black)),
         value: _switch,
@@ -57,6 +58,7 @@ class _FriendsPageState extends State<FriendsPage> {
         },
       );
 
+  // structure of the view page
   @override
   Widget build(BuildContext context) {
     return Scaffold(
