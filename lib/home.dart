@@ -62,15 +62,15 @@ class HomeState extends State<HomePage> {
 
   //ALLOW CONTROL OF GOOGLE MAPS
   void _onMapCreated(GoogleMapController controller) {
-    //allow for looking around map
-    mapController = controller;
-    //listen to user current position
+    mapController = controller; //allow for looking around map
+    location.changeSettings(interval: 1000000);
     location.onLocationChanged.listen((l) {
       //lock onto user position at log-in
       mapController.animateCamera(
         //update camera if user position changes
         CameraUpdate.newCameraPosition(
-          CameraPosition(target: LatLng(l.latitude!, l.longitude!), zoom: 16),
+          //update if user position changes
+          CameraPosition(target: LatLng(l.latitude!, l.longitude!), zoom: 14), //fetch new position
         ),
       );
     });
