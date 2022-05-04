@@ -1,18 +1,17 @@
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-//firestore class
-
+import 'package:pingme/request.dart';
 
 class FireStoreDataBase {
   List friendList = [];
+  List requestList = [];
   final CollectionReference collectionRef =
       FirebaseFirestore.instance.collection("userEmails");
 
-  Future getData() async {
+  Future getData() async {//generates snapshot of friends list
     try {
         var firebaseUser = FirebaseAuth.instance.currentUser;
         if(firebaseUser != null) {
@@ -21,7 +20,7 @@ class FireStoreDataBase {
               friendList.add(result.data());
             }
           });
-        }
+              }
       return friendList;
     } catch(e) {
       debugPrint("Error - $e");
@@ -29,10 +28,6 @@ class FireStoreDataBase {
     }
   }
 }
-
-
-
-
 
 // FRIENDS PAGE CLASS
 class FriendsPage extends StatefulWidget {
@@ -43,10 +38,12 @@ class FriendsPage extends StatefulWidget {
 
 class _FriendsPageState extends State<FriendsPage> {
   List friendsList2 = [];
+  var firebaseUser = FirebaseAuth.instance.currentUser;
   final emailController = TextEditingController();
   bool _incompleteForm = false;
   bool _friendDoesNotExist = false;
   String friendUID = '';
+  String username = '';
   // FRIEND LIST ENTRY WIDGET FUNCTION
   bool _switch = false;
   Widget friendEntry(String entry) => SwitchListTile(
@@ -66,6 +63,20 @@ class _FriendsPageState extends State<FriendsPage> {
       appBar: AppBar(
         title: const Text('My Friends'),
         centerTitle: true,
+          actions: [IconButton(
+            //settings button
+            icon: const Icon(Icons.add_reaction),
+            onPressed: () async {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const RequestPage())).then((_){
+                        setState(() {
+
+                        });
+              });
+            },
+          )]
       ),
       body: FutureBuilder(
         future: FireStoreDataBase().getData(),
@@ -80,6 +91,8 @@ class _FriendsPageState extends State<FriendsPage> {
           return const Center(child: CircularProgressIndicator());
         }
         ),
+
+
 
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
@@ -117,18 +130,24 @@ class _FriendsPageState extends State<FriendsPage> {
                           // Friend exists so now we add em
                           if (!_friendDoesNotExist) {
            var firebaseUser = FirebaseAuth.instance.currentUser;
+
               if(firebaseUser != null) {
+                await FirebaseFirestore.instance.collection('userEmails').doc(firebaseUser.uid)
+                    .get().then((res) {
+                   username = res['username'].toString();
+                });
                 await FirebaseFirestore.instance
                       .collection('userEmails')
-                      .doc(firebaseUser.uid).collection("friends")
-                      .doc(friendUID).set({
+                      .doc(friendUID).collection("requests")
+                      .doc(firebaseUser.uid).set({
                       // Appending to field array
 
-                        "username" : emailController.text,
-                        "tracking" : false,
+                        "username" : username,
+                        "accept" : false,
                       });
           }
                             Navigator.pop(context);
+                            setState(() {});
                           }
                         },
                         child: const Text('Ok'))
@@ -137,7 +156,6 @@ class _FriendsPageState extends State<FriendsPage> {
       ),
       );
   }
-
   Widget buildItems(friendsList2) => ListView.separated(
     padding: const EdgeInsets.all(8),
     itemCount: friendsList2.length,
@@ -151,6 +169,21 @@ class _FriendsPageState extends State<FriendsPage> {
           setState(() {
             var firebaseUser = FirebaseAuth.instance.currentUser;
             if(firebaseUser != null){
+              FirebaseFirestore.instance
+                  .collection('userEmails')
+                  .where("username", isEqualTo: friendsList2[index]["username"])
+                  .get()
+                  .then((querySnapshot) {
+                friendUID = querySnapshot.docs[0].id;
+              });
+              FirebaseFirestore.instance.collection("userEmails").doc(friendUID).get().then((res){
+                FirebaseFirestore.instance.collection("userEmails").doc(firebaseUser.uid).collection("friends").doc(friendUID).set({
+                  "tracking": value,
+                  "username":friendsList2[index]["username"],
+                  "location":res["location"],
+                  "time":res["time"],
+                });
+              });
               FirebaseFirestore.instance.collection("userEmails").doc(firebaseUser.uid).collection("friends").where("username", isEqualTo: friendsList2[index]["username"]).get().then((res) {
                 final results = res.docs[0].id;
                 FirebaseFirestore.instance.collection("userEmails").doc(firebaseUser.uid).collection("friends").doc(results).update({"tracking" : value});
