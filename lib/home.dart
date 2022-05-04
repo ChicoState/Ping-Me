@@ -13,56 +13,64 @@ class HomePage extends StatefulWidget {
   HomeState createState() => HomeState(); //init class HomeState
 }
 
-Future<Position> _getGeoLocationPosition() async {
-  return Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-}
-
 class HomeState extends State<HomePage> {
-  late GoogleMapController mapController; //load google apps function from google_maps_flutter plugin
-  LatLng initcamposition = const LatLng(45.521563, -122.677433); //default cam position
-  Location location = Location(); //enable location tracking from user device using location plugin
+  late GoogleMapController mapController;
+  LatLng initcamposition = const LatLng(45.521563, -122.677433);
+  Location location = Location();
   final firestoreinstance = FirebaseFirestore.instance;
-  //final CollectionReference users = FirebaseFirestore.instance.collection('userEmails');
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
 
   @override
-  void initState(){
+  void initState() {
     getMarkerData();
     super.initState();
   }
 
+  //FETCH USER POSITION
+  Future<Position> _getGeoLocationPosition() async {
+    return Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  }
+
+  //COLLECT AND PROCESS ALL USERS IN FIREBASE FOR CREATING MARKERS
+  getMarkerData() async{
+    setState(() {
+      FirebaseFirestore.instance.collection('userEmails').get().then((myMarkers) {
+        if(myMarkers.docs.isNotEmpty) {
+          for (int i = 0; i < myMarkers.docs.length; i++) {
+            initMarker(myMarkers.docs[i].data(), myMarkers.docs[i].id);
+          }
+        }
+      });
+    });
+  }
+
+  //CREATE MARKER BASED OFF OF USER DATA IN FIREBASE
   void initMarker(specify, specifyId) async{
+    setState(() {
     var markeridvalue = specifyId;
     final MarkerId markerId = MarkerId(markeridvalue);
+    //create marker with user location, username, and time
     final Marker marker = Marker(
       markerId: markerId,
       position: LatLng(specify['location'].latitude, specify['location'].longitude),
       infoWindow: InfoWindow(title: specify['email'], snippet: specify['time'].toDate().toString()),
     );
-    setState(() {
+    //push marker into Map array for displaying in Google Maps
       markers[markerId] = marker;
     });
   }
 
-  getMarkerData() async{
-    FirebaseFirestore.instance.collection('userEmails').get().then((myMarkers) {
-      if(myMarkers.docs.isNotEmpty) {
-          for(int i = 0; i < myMarkers.docs.length; i++) {
-              initMarker(myMarkers.docs[i].data(), myMarkers.docs[i].id);
-          }
-      }
-    });
-  }
-
+  //ALLOW CONTROL OF GOOGLE MAPS
   void _onMapCreated(GoogleMapController controller) {
-    mapController = controller; //allow for looking around map
+    //allow for looking around map
+    mapController = controller;
+    //listen to user current position
     location.onLocationChanged.listen((l) {
-      //listen to user current position
+      //lock onto user position at log-in
       mapController.animateCamera(
-        //lock onto user position
+        //update camera if user position changes
         CameraUpdate.newCameraPosition(
-          //update if user position changes
-          CameraPosition(target: LatLng(l.latitude!, l.longitude!), zoom: 16), //fetch new position
+          CameraPosition(target: LatLng(l.latitude!, l.longitude!), zoom: 16),
         ),
       );
     });
@@ -72,25 +80,30 @@ class HomeState extends State<HomePage> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
+        //PING-ME APP HEADER
         appBar: AppBar(
             title: const Text('PingMe'),
             backgroundColor: Colors.blue,
             centerTitle: true,
+            //SETTINGS BUTTON
             leading: IconButton(
-              //settings button
               icon: const Icon(Icons.settings),
               onPressed: () {},
             )),
+
+        //GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
         body: GoogleMap(
-          //markers: Set<Marker>.of(markers.values),
-          markers: markers.values.toSet(),
-          onMapCreated: _onMapCreated, //build map
+          markers: Set<Marker>.of(markers.values),// <-- Another way to fetch markers, maybe better???
+          //markers: markers.values.toSet(),
+          onMapCreated: _onMapCreated,
           initialCameraPosition: CameraPosition(
-            target: initcamposition, //initial position
-            zoom: 1.0, //initial zoom (globe)
+            target: initcamposition,
+            zoom: 1.0,
           ),
-          myLocationEnabled: true, //allow for permission to track user
+          myLocationEnabled: true,
         ),
+
+        //FOOTER WITH FRIENDS, PING BUTTON, AND LOGOUT
         bottomNavigationBar: BottomAppBar(
           //footer navigation bar
           shape: const CircularNotchedRectangle(), //navigation bar layout
@@ -99,6 +112,8 @@ class HomeState extends State<HomePage> {
           child: Row(
             children: [
               IconButton(
+
+                //LOGOUT BUTTON
                 icon: const Icon(Icons.logout_rounded),
                 color: Colors.white,
                 onPressed: () async {
@@ -110,44 +125,36 @@ class HomeState extends State<HomePage> {
                           builder: (context) => const LoginPage()));
                 },
               ),
-              const Spacer(), //allow for friends icon to appear right side
+              const Spacer(),
 
+              //FRIENDS BUTTON
               IconButton(
                   icon:
-                      const Icon(Icons.perm_identity_outlined, //friends button
-                          color: Colors.white),
+                  const Icon(Icons.perm_identity_outlined, color: Colors.white),
                   onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const FriendsPage()));
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => const FriendsPage()));
                   }),
             ],
           ),
         ),
+
+        //PING BUTTON
         floatingActionButton: FloatingActionButton(
-            //map button
             child: const Icon(Icons.public),
             onPressed: () async {
               Position geoPosition = await _getGeoLocationPosition();
               var firebaseUser = FirebaseAuth.instance.currentUser;
               if (firebaseUser != null) {
-                await firestoreinstance
-                    .collection("userEmails")
-                    .doc(firebaseUser.uid)
-                    .update({
-                  'location':
-                      GeoPoint(geoPosition.latitude, geoPosition.longitude),
-                  'time':
-                      Timestamp.now(),
+                await firestoreinstance.collection("userEmails").doc(firebaseUser.uid).update({
+                  'location': GeoPoint(geoPosition.latitude, geoPosition.longitude),
+                  'time': Timestamp.now(),
                 });
               }
-              showDialog(
-                  context: context,
+              showDialog(context: context,
                   builder: (context) => AlertDialog(
                           title: const Text('Current Location'),
-                          content: Text(
-                              "LAT: ${geoPosition.latitude}, LNG: ${geoPosition.longitude}"),
+                          content: Text("LAT: ${geoPosition.latitude}, LNG: ${geoPosition.longitude}"),
                           actions: [
                             TextButton(
                               child: const Text('OK'),
