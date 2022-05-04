@@ -97,6 +97,12 @@ class _RequestPageState extends State<RequestPage> {
 
                     });
                     FirebaseFirestore.instance.collection("userEmails").doc(firebaseUser.uid).collection("requests").doc(results).delete();
+                    FirebaseFirestore.instance.collection("userEmails").doc(firebaseUser.uid).get().then((res){
+                      FirebaseFirestore.instance.collection("userEmails").doc(results).collection("friends").doc(firebaseUser.uid).set({
+                        "username": res["username"],
+                        "tracking": false,
+                      });
+                    });
                   });
 
                 }
