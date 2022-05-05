@@ -69,6 +69,16 @@ class _FriendsRequestsState extends State<FriendsRequests> {
                               onPressed: () async {
                                 var firebaseUser =
                                     FirebaseAuth.instance.currentUser;
+                                // Getting current user's username
+                                String username = '';
+                                await FirebaseFirestore.instance
+                                    .collection('userEmails')
+                                    .doc(firebaseUser?.uid)
+                                    .get()
+                                    .then((querySnapshot) {
+                                  username = querySnapshot['username'];
+                                });
+                                // Getting the friend's uid
                                 String friendUID = '';
                                 await FirebaseFirestore.instance
                                     .collection('userEmails')
@@ -90,6 +100,7 @@ class _FriendsRequestsState extends State<FriendsRequests> {
                                       .get()
                                       .then((res) {
                                     final results = res.docs[0].id;
+                                    // Adding friend to the user's list
                                     FirebaseFirestore.instance
                                         .collection('userEmails')
                                         .doc(firebaseUser.uid)
@@ -100,6 +111,17 @@ class _FriendsRequestsState extends State<FriendsRequests> {
                                           ['username'],
                                       'tracking': false,
                                       'uid': friendUID
+                                    });
+                                    // Adding this user to the friend's list
+                                    FirebaseFirestore.instance
+                                        .collection('userEmails')
+                                        .doc(results)
+                                        .collection('friends')
+                                        .doc(firebaseUser.uid)
+                                        .set({
+                                      'username': username,
+                                      'tracking': false,
+                                      'uid': firebaseUser.uid,
                                     });
                                   });
                                 }
