@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -37,6 +38,7 @@ class _FriendsPageState extends State<FriendsPage> {
       appBar: AppBar(
         title: const Text('PingMates'),
         centerTitle: true,
+
         actions: [
           IconButton(
               onPressed: () {
@@ -105,6 +107,7 @@ class _FriendsPageState extends State<FriendsPage> {
           showDialog(
               context: context,
               builder: (context) => AlertDialog(
+
                       title: const Text('Add Friend'),
                       content: TextField(
                         controller: emailController,
