@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pingme/home.dart';
 import 'package:pingme/authentication/signup.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 // LOGIN PAGE CLASS
 class LoginPage extends StatefulWidget {
@@ -16,7 +15,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final firestoreInstance = FirebaseFirestore.instance;
   bool _errorLogin = false;
 
   @override
