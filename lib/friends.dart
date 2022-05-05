@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:pingme/requests.dart';
 
 // FRIENDS PAGE CLASS
 class FriendsPage extends StatefulWidget {
@@ -14,6 +15,7 @@ class _FriendsPageState extends State<FriendsPage> {
   final emailController = TextEditingController();
   bool _incompleteForm = false;
   bool _friendDoesNotExist = false;
+  String username = '';
   String friendUID = '';
   final _uid = FirebaseAuth.instance.currentUser!.uid;
 
@@ -35,6 +37,16 @@ class _FriendsPageState extends State<FriendsPage> {
       appBar: AppBar(
         title: const Text('PingMates'),
         centerTitle: true,
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const FriendsRequests()));
+              },
+              icon: const Icon(Icons.group_add))
+        ],
       ),
       body: StreamBuilder(
           stream: FirebaseFirestore.instance
@@ -87,7 +99,7 @@ class _FriendsPageState extends State<FriendsPage> {
             );
           }),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.person_add_alt),
         onPressed: () {
           // ADD FRIENDS BOX
           showDialog(
@@ -129,13 +141,18 @@ class _FriendsPageState extends State<FriendsPage> {
                                   await FirebaseFirestore.instance
                                       .collection('userEmails')
                                       .doc(firebaseUser.uid)
-                                      .collection("friends")
+                                      .get()
+                                      .then((res) {
+                                    username = res['username'].toString();
+                                  });
+                                  await FirebaseFirestore.instance
+                                      .collection('userEmails')
                                       .doc(friendUID)
+                                      .collection("requests")
+                                      .doc(firebaseUser.uid)
                                       .set({
                                     // Appending to field array
-                                    "username": emailController.text,
-                                    "uid": friendUID,
-                                    "tracking": false,
+                                    "username": username,
                                   });
                                 }
                                 Navigator.pop(context);
