@@ -16,6 +16,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final passwordController = TextEditingController();
   final passwordController2 = TextEditingController();
   final firestoreInstance = FirebaseFirestore.instance;
+  final usernameController = TextEditingController();
 
   // ERROR CODES
   bool _incompleteForm = false;
@@ -35,7 +36,7 @@ class _SignUpPageState extends State<SignUpPage> {
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Container(
             width: 320,
-            height: 400,
+            height: 437,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.secondary,
               border: Border.all(
@@ -76,6 +77,20 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const SizedBox(height: 10),
                   TextField(
+                    controller: usernameController,
+                    textAlign: TextAlign.left,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      labelText: 'Username',
+                      floatingLabelBehavior: FloatingLabelBehavior.never,
+                      fillColor: Colors.white,
+                      filled: true,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
                     controller: passwordController,
                     obscureText: true,
                     textAlign: TextAlign.left,
@@ -109,7 +124,8 @@ class _SignUpPageState extends State<SignUpPage> {
                       onPressed: () async {
                         _incompleteForm = emailController.text == '' ||
                             passwordController.text == '' ||
-                            passwordController2.text == '';
+                            passwordController2.text == '' ||
+                            usernameController.text == '';
                         _passMismatch =
                             passwordController.text != passwordController2.text;
                         // IF PASSWORDS MATCH
@@ -122,9 +138,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                     password: passwordController.text);
                             _weakPass = _emailUsed = _emailInvalid = false;
                             var firebaseUser = FirebaseAuth.instance.currentUser;
-                            if(firebaseUser != null) {
-                              await firestoreInstance.collection("userEmails").doc(firebaseUser.uid).set({"email" : emailController.text,});
-                            }
+                            if(firebaseUser != null)
+                              await firestoreInstance.collection("userEmails").doc(firebaseUser.uid).set({"email" : emailController.text, "username" : usernameController.text,});
                             setState(() {});
                             Navigator.pop(context);
                           } on FirebaseAuthException catch (e) {
