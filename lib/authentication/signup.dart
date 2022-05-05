@@ -138,8 +138,9 @@ class _SignUpPageState extends State<SignUpPage> {
                                     password: passwordController.text);
                             _weakPass = _emailUsed = _emailInvalid = false;
                             var firebaseUser = FirebaseAuth.instance.currentUser;
-                            if(firebaseUser != null)
+                            if(firebaseUser != null) {
                               await firestoreInstance.collection("userEmails").doc(firebaseUser.uid).set({"email" : emailController.text, "username" : usernameController.text,});
+                            }
                             setState(() {});
                             Navigator.pop(context);
                           } on FirebaseAuthException catch (e) {

@@ -6,12 +6,6 @@ import 'package:pingme/authentication/login.dart';
 // CSCI 430: pingme
 // Names: Jorge Munoz,
 
-// ~TODO(mvp): Get a home page with google maps intigration.
-// ~TODO: Bottom menu bar to navigate between pages
-// TODO: Friends page
-// TODO: location plugin
-// TODO: ????
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
