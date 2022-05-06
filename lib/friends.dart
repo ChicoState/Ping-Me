@@ -1,36 +1,7 @@
 import 'package:flutter/material.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-// firestore class
-
-class FireStoreDataBase {
-  List friendList = [];
-  final CollectionReference collectionRef =
-      FirebaseFirestore.instance.collection("userEmails");
-
-  Future getData() async {
-    try {
-      var firebaseUser = FirebaseAuth.instance.currentUser;
-      if (firebaseUser != null) {
-        await collectionRef
-            .doc(firebaseUser.uid)
-            .collection("friends")
-            .get()
-            .then((querySnapshot) {
-          for (var result in querySnapshot.docs) {
-            friendList.add(result.data());
-          }
-        });
-      }
-      return friendList;
-    } catch (e) {
-      debugPrint("Error - $e");
-      return null;
-    }
-  }
-}
+import 'package:pingme/requests.dart';
 
 // FRIENDS PAGE CLASS
 class FriendsPage extends StatefulWidget {
@@ -40,14 +11,16 @@ class FriendsPage extends StatefulWidget {
 }
 
 class _FriendsPageState extends State<FriendsPage> {
-  List friendsList2 = [];
+  late var friendsDocs;
   final emailController = TextEditingController();
   bool _incompleteForm = false;
   bool _friendDoesNotExist = false;
+  String username = '';
   String friendUID = '';
-  bool _switch = false;
+  final _uid = FirebaseAuth.instance.currentUser!.uid;
 
   // FRIEND LIST ENTRY WIDGET FUNCTION
+  bool _switch = false;
   Widget friendEntry(String entry) => SwitchListTile(
         title: Text(entry, style: const TextStyle(color: Colors.black)),
         value: _switch,
@@ -58,31 +31,77 @@ class _FriendsPageState extends State<FriendsPage> {
         },
       );
 
-  // structure of the view page
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Friends'),
+        title: const Text('PingMates'),
         centerTitle: true,
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const FriendsRequests()));
+              },
+              icon: const Icon(Icons.group_add))
+        ],
       ),
-      body: FutureBuilder(
-          future: FireStoreDataBase().getData(),
-          builder: (context, snapshot) {
+      body: StreamBuilder(
+          stream: FirebaseFirestore.instance
+              .collection('userEmails')
+              .doc(_uid)
+              .collection('friends')
+              .snapshots(),
+          builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
             if (snapshot.hasError) {
               return const Text(
                 "something went wrong",
               );
             }
-            if (snapshot.connectionState == ConnectionState.done) {
-              friendsList2 = snapshot.data as List;
-              return buildItems(friendsList2);
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
             }
-            return const Center(child: CircularProgressIndicator());
+            // BUILDING FRIENDS LIST
+            if (snapshot.hasData) {
+              friendsDocs = snapshot.data?.docs;
+              return ListView.separated(
+                  itemCount: friendsDocs.length,
+                  separatorBuilder: (context, index) => const Divider(),
+                  itemBuilder: (context, index) {
+                    // FRIEND TILE
+                    return SwitchListTile(
+                        title: Text(friendsDocs[index]['username']),
+                        value: friendsDocs[index]['tracking'],
+                        onChanged: (value) {
+                          FirebaseFirestore.instance
+                              .collection('userEmails')
+                              .doc(_uid)
+                              .collection("friends")
+                              .where('uid',
+                                  isEqualTo: friendsDocs[index]['uid'])
+                              .get()
+                              .then((res) {
+                            final results = res.docs[0].id;
+                            FirebaseFirestore.instance
+                                .collection("userEmails")
+                                .doc(_uid)
+                                .collection("friends")
+                                .doc(results)
+                                .update({"tracking": value});
+                          });
+                        });
+                  });
+            }
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+            );
           }),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.person_add_alt),
         onPressed: () {
+          // ADD FRIENDS BOX
           showDialog(
               context: context,
               builder: (context) => AlertDialog(
@@ -122,16 +141,22 @@ class _FriendsPageState extends State<FriendsPage> {
                                   await FirebaseFirestore.instance
                                       .collection('userEmails')
                                       .doc(firebaseUser.uid)
-                                      .collection("friends")
+                                      .get()
+                                      .then((res) {
+                                    username = res['username'].toString();
+                                  });
+                                  await FirebaseFirestore.instance
+                                      .collection('userEmails')
                                       .doc(friendUID)
+                                      .collection("requests")
+                                      .doc(firebaseUser.uid)
                                       .set({
                                     // Appending to field array
-
-                                    "username": emailController.text,
-                                    "tracking": false,
+                                    "username": username,
                                   });
                                 }
                                 Navigator.pop(context);
+                                setState(() {});
                               }
                             },
                             child: const Text('Ok'))
@@ -140,40 +165,4 @@ class _FriendsPageState extends State<FriendsPage> {
       ),
     );
   }
-
-  Widget buildItems(friendsList2) => ListView.separated(
-      padding: const EdgeInsets.all(8),
-      itemCount: friendsList2.length,
-      separatorBuilder: (BuildContext context, int index) => const Divider(),
-      itemBuilder: (BuildContext context, int index) {
-        return SwitchListTile(
-            title: Text(
-              friendsList2[index]["username"],
-            ),
-            value: friendsList2[index]["tracking"],
-            onChanged: (bool value) {
-              setState(() {
-                var firebaseUser = FirebaseAuth.instance.currentUser;
-                if (firebaseUser != null) {
-                  FirebaseFirestore.instance
-                      .collection("userEmails")
-                      .doc(firebaseUser.uid)
-                      .collection("friends")
-                      .where("username",
-                          isEqualTo: friendsList2[index]["username"])
-                      .get()
-                      .then((res) {
-                    final results = res.docs[0].id;
-                    FirebaseFirestore.instance
-                        .collection("userEmails")
-                        .doc(firebaseUser.uid)
-                        .collection("friends")
-                        .doc(results)
-                        .update({"tracking": value});
-                    setState(() {});
-                  });
-                }
-              });
-            });
-      });
 }
