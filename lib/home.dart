@@ -23,13 +23,18 @@ class HomeState extends State<HomePage> {
   final firestoreinstance = FirebaseFirestore.instance;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
   Timer? timer;
+  bool toggleLocation = false;
+  Color toggleColor = Colors.red;
+
 
   @override
   void initState() {
     getMarkerData();
     super.initState();
     timer = Timer.periodic(
-        const Duration(seconds: 10), (Timer t) => getMarkerData());
+        const Duration(seconds: 5), (Timer t) => getMarkerData());
+    timer = Timer.periodic(
+        const Duration(seconds: 5), (Timer t) => updateLocation());
   }
 
   //FETCH USER POSITION
@@ -76,7 +81,7 @@ class HomeState extends State<HomePage> {
       final Marker marker = Marker(
         markerId: markerId,
         position:
-            LatLng(specify['location'].latitude, specify['location'].longitude),
+        LatLng(specify['location'].latitude, specify['location'].longitude),
         infoWindow: InfoWindow(
             title: specify['username'],
             snippet: specify['time'].toDate().toString()),
@@ -104,98 +109,103 @@ class HomeState extends State<HomePage> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        //PING-ME APP HEADER
-        appBar: AppBar(
-          title: const Text('PingMe'),
-          backgroundColor: Colors.blue,
-          centerTitle: true,
-        ),
+  void updateLocation() async {
+    if (toggleLocation == true) {
+      Position geoPosition = await _getGeoLocationPosition();
+      var firebaseUser = FirebaseAuth.instance.currentUser;
+      if (firebaseUser != null) {
+        await firestoreinstance
+            .collection("userEmails")
+            .doc(firebaseUser.uid)
+            .update({
+          'location': GeoPoint(geoPosition.latitude, geoPosition.longitude),
+          'time': Timestamp.now(),
+        });
+      }
+    }
+  }
 
-        //GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
-        body: GoogleMap(
-          markers: Set<Marker>.of(markers
-              .values), // <-- Another way to fetch markers, maybe better???
-          //markers: markers.values.toSet(),
-          onMapCreated: _onMapCreated,
-          initialCameraPosition: CameraPosition(
-            target: initcamposition,
-            zoom: 1.0,
+    @override
+    Widget build(BuildContext context) {
+      return MaterialApp(
+        home: Scaffold(
+          //PING-ME APP HEADER
+          appBar: AppBar(
+            title: const Text('PingMe'),
+            backgroundColor: Colors.blue,
+            centerTitle: true,
           ),
-          myLocationEnabled: true,
-        ),
 
-        //FOOTER WITH FRIENDS, PING BUTTON, AND LOGOUT
-        bottomNavigationBar: BottomAppBar(
-          //footer navigation bar
-          shape: const CircularNotchedRectangle(), //navigation bar layout
-          notchMargin: 6.0,
-          color: Colors.blue,
-          child: Row(
-            children: [
-              IconButton(
-                //LOGOUT BUTTON
-                icon: const Icon(Icons.logout_rounded),
-                color: Colors.white,
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  setState(() {});
-                  Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const LoginPage()));
-                },
-              ),
-              const Spacer(),
+          //GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
+          body: GoogleMap(
+            markers: Set<Marker>.of(markers.values),
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(
+              target: initcamposition,
+              zoom: 1.0,
+            ),
+            myLocationEnabled: true,
+          ),
 
-              //FRIENDS BUTTON
-              IconButton(
-                  icon: const Icon(Icons.perm_identity_outlined,
-                      color: Colors.white),
-                  onPressed: () {
-                    Navigator.push(
+          //FOOTER WITH FRIENDS, PING BUTTON, AND LOGOUT
+          bottomNavigationBar: BottomAppBar(
+            //footer navigation bar
+            shape: const CircularNotchedRectangle(), //navigation bar layout
+            notchMargin: 6.0,
+            color: Colors.blue,
+            child: Row(
+              children: [
+                IconButton(
+                  //LOGOUT BUTTON
+                  icon: const Icon(Icons.logout_rounded),
+                  color: Colors.white,
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                    setState(() {});
+                    Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const FriendsPage()));
-                  }),
-            ],
-          ),
-        ),
+                            builder: (context) => const LoginPage()));
+                  },
+                ),
+                const Spacer(),
 
-        //PING BUTTON
-        floatingActionButton: FloatingActionButton(
+                //FRIENDS BUTTON
+                IconButton(
+                    icon: const Icon(Icons.perm_identity_outlined,
+                        color: Colors.white),
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const FriendsPage()));
+                    }),
+              ],
+            ),
+          ),
+
+          //PING BUTTON
+          floatingActionButton: FloatingActionButton(
             child: const Icon(Icons.public),
             onPressed: () async {
-              Position geoPosition = await _getGeoLocationPosition();
-              var firebaseUser = FirebaseAuth.instance.currentUser;
-              if (firebaseUser != null) {
-                await firestoreinstance
-                    .collection("userEmails")
-                    .doc(firebaseUser.uid)
-                    .update({
-                  'location':
-                      GeoPoint(geoPosition.latitude, geoPosition.longitude),
-                  'time': Timestamp.now(),
-                });
-              }
-              showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                          title: const Text('Current Location'),
-                          content: Text(
-                              "LAT: ${geoPosition.latitude}, LNG: ${geoPosition.longitude}"),
-                          actions: [
-                            TextButton(
-                              child: const Text('OK'),
-                              onPressed: () => Navigator.pop(context),
-                            )
-                          ]));
-            }),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      ),
-    );
+              setState(() {
+                if (toggleLocation == false) {
+                  toggleColor = Colors.green;
+                  toggleLocation = true;
+                }
+
+                else if (toggleLocation == true) {
+                  toggleColor = Colors.red;
+                  toggleLocation = false;
+                }
+              });
+            },
+
+            backgroundColor: toggleColor,
+          ),
+          floatingActionButtonLocation: FloatingActionButtonLocation
+              .centerDocked,
+        ),
+      );
+    }
   }
-}
