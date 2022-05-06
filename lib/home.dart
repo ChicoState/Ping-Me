@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:pingme/friends.dart';
@@ -8,6 +7,7 @@ import 'package:pingme/authentication/login.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:pingme/helpers.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -26,7 +26,6 @@ class HomeState extends State<HomePage> {
   bool toggleLocation = false;
   Color toggleColor = Colors.red;
 
-
   @override
   void initState() {
     getMarkerData();
@@ -34,17 +33,11 @@ class HomeState extends State<HomePage> {
     timer = Timer.periodic(
         const Duration(seconds: 5), (Timer t) => getMarkerData());
     timer = Timer.periodic(
-        const Duration(seconds: 5), (Timer t) => updateLocation());
-  }
-
-  //FETCH USER POSITION
-  Future<Position> _getGeoLocationPosition() async {
-    return Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+        const Duration(seconds: 5), (Timer t) => updateLocationHistory());
   }
 
   //COLLECT AND PROCESS ALL USERS IN FIREBASE FOR CREATING MARKERS
-  getMarkerData() async {
+  void getMarkerData() async {
     // setState(() {
     // Looking for users from the friends list
     markers = <MarkerId, Marker>{};
@@ -81,7 +74,7 @@ class HomeState extends State<HomePage> {
       final Marker marker = Marker(
         markerId: markerId,
         position:
-        LatLng(specify['location'].latitude, specify['location'].longitude),
+            LatLng(specify['location'].latitude, specify['location'].longitude),
         infoWindow: InfoWindow(
             title: specify['username'],
             snippet: specify['time'].toDate().toString()),
@@ -109,103 +102,133 @@ class HomeState extends State<HomePage> {
     });
   }
 
-  void updateLocation() async {
+  Future<void> updateLocationHistory() async {
     if (toggleLocation == true) {
-      Position geoPosition = await _getGeoLocationPosition();
-      var firebaseUser = FirebaseAuth.instance.currentUser;
-      if (firebaseUser != null) {
-        await firestoreinstance
-            .collection("userEmails")
-            .doc(firebaseUser.uid)
+      List<GeoPoint> locationHistory = <GeoPoint>[];
+      List<Timestamp> timeHistory = <Timestamp>[];
+
+      // Getting the current location history from firestore
+      await FirebaseFirestore.instance
+          .collection('userEmails')
+          .doc(_uid)
+          .get()
+          .then((userData) {
+        if (userData.data()!.containsKey('locationHistory')) {
+          for (var element in List.from(userData.data()!['locationHistory'])) {
+            locationHistory.add(element);
+          }
+        }
+        if (userData.data()!.containsKey('timeHistory')) {
+          for (var element in List.from(userData.data()!['timeHistory'])) {
+            timeHistory.add(element);
+          }
+        }
+      });
+
+      // Popping off the oldest entry
+      if (locationHistory.length > 9) {
+        locationHistory.removeLast();
+      }
+      if (timeHistory.length > 9) {
+        timeHistory.removeLast();
+      }
+
+      // Adding current location and time to list
+      Position curPos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      locationHistory.insert(0, GeoPoint(curPos.latitude, curPos.longitude));
+      timeHistory.insert(0, Timestamp.now());
+
+      // Pushing the lists to the database
+      if (FirebaseAuth.instance.currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('userEmails')
+            .doc(_uid)
             .update({
-          'location': GeoPoint(geoPosition.latitude, geoPosition.longitude),
-          'time': Timestamp.now(),
+          'locationHistory': locationHistory,
+          'timeHistory': timeHistory,
         });
       }
     }
   }
 
-    @override
-    Widget build(BuildContext context) {
-      return MaterialApp(
-        home: Scaffold(
-          //PING-ME APP HEADER
-          appBar: AppBar(
-            title: const Text('PingMe'),
-            backgroundColor: Colors.blue,
-            centerTitle: true,
-          ),
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        //PING-ME APP HEADER
+        appBar: AppBar(
+          title: const Text('PingMe'),
+          backgroundColor: Colors.blue,
+          centerTitle: true,
+        ),
 
-          //GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
-          body: GoogleMap(
-            markers: Set<Marker>.of(markers.values),
-            onMapCreated: _onMapCreated,
-            initialCameraPosition: CameraPosition(
-              target: initcamposition,
-              zoom: 1.0,
-            ),
-            myLocationEnabled: true,
+        //GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
+        body: GoogleMap(
+          markers: Set<Marker>.of(markers.values),
+          onMapCreated: _onMapCreated,
+          initialCameraPosition: CameraPosition(
+            target: initcamposition,
+            zoom: 1.0,
           ),
+          myLocationEnabled: true,
+        ),
 
-          //FOOTER WITH FRIENDS, PING BUTTON, AND LOGOUT
-          bottomNavigationBar: BottomAppBar(
-            //footer navigation bar
-            shape: const CircularNotchedRectangle(), //navigation bar layout
-            notchMargin: 6.0,
-            color: Colors.blue,
-            child: Row(
-              children: [
-                IconButton(
-                  //LOGOUT BUTTON
-                  icon: const Icon(Icons.logout_rounded),
-                  color: Colors.white,
-                  onPressed: () async {
-                    await FirebaseAuth.instance.signOut();
-                    setState(() {});
-                    Navigator.pushReplacement(
+        //FOOTER WITH FRIENDS, PING BUTTON, AND LOGOUT
+        bottomNavigationBar: BottomAppBar(
+          //footer navigation bar
+          shape: const CircularNotchedRectangle(), //navigation bar layout
+          notchMargin: 6.0,
+          color: Colors.blue,
+          child: Row(
+            children: [
+              IconButton(
+                //LOGOUT BUTTON
+                icon: const Icon(Icons.logout_rounded),
+                color: Colors.white,
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  setState(() {});
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const LoginPage()));
+                },
+              ),
+              const Spacer(),
+
+              //FRIENDS BUTTON
+              IconButton(
+                  icon: const Icon(Icons.perm_identity_outlined,
+                      color: Colors.white),
+                  onPressed: () {
+                    Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const LoginPage()));
-                  },
-                ),
-                const Spacer(),
-
-                //FRIENDS BUTTON
-                IconButton(
-                    icon: const Icon(Icons.perm_identity_outlined,
-                        color: Colors.white),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const FriendsPage()));
-                    }),
-              ],
-            ),
+                            builder: (context) => const FriendsPage()));
+                  }),
+            ],
           ),
-
-          //PING BUTTON
-          floatingActionButton: FloatingActionButton(
-            child: const Icon(Icons.public),
-            onPressed: () async {
-              setState(() {
-                if (toggleLocation == false) {
-                  toggleColor = Colors.green;
-                  toggleLocation = true;
-                }
-
-                else if (toggleLocation == true) {
-                  toggleColor = Colors.red;
-                  toggleLocation = false;
-                }
-              });
-            },
-
-            backgroundColor: toggleColor,
-          ),
-          floatingActionButtonLocation: FloatingActionButtonLocation
-              .centerDocked,
         ),
-      );
-    }
+
+        //PING BUTTON
+        floatingActionButton: FloatingActionButton(
+          child: const Icon(Icons.public),
+          onPressed: () async {
+            setState(() {
+              if (toggleLocation == false) {
+                toggleColor = Colors.green;
+                toggleLocation = true;
+              } else if (toggleLocation == true) {
+                toggleColor = Colors.red;
+                toggleLocation = false;
+              }
+            });
+          },
+          backgroundColor: toggleColor,
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      ),
+    );
   }
+}
