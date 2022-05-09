@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:pingme/friends.dart';
@@ -24,7 +25,8 @@ class HomeState extends State<HomePage> {
   Timer? timer;
   bool toggleLocation = false;
   Color toggleColor = Colors.red;
-  var currentTime;
+
+
   @override
   void initState() {
     getMarkerData();
@@ -79,7 +81,7 @@ class HomeState extends State<HomePage> {
       final Marker marker = Marker(
         markerId: markerId,
         position:
-            LatLng(specify['location'].latitude, specify['location'].longitude),
+        LatLng(specify['location'].latitude, specify['location'].longitude),
         infoWindow: InfoWindow(
             title: specify['username'],
             snippet: specify['time'].toDate().toString()),
@@ -111,7 +113,6 @@ class HomeState extends State<HomePage> {
     if (toggleLocation == true) {
       Position geoPosition = await _getGeoLocationPosition();
       var firebaseUser = FirebaseAuth.instance.currentUser;
-      currentTime = Timestamp.now().toDate().toString();
       if (firebaseUser != null) {
         await firestoreinstance
             .collection("userEmails")
@@ -124,105 +125,87 @@ class HomeState extends State<HomePage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        //PING-ME APP HEADER
-        appBar: AppBar(
-          title: const Text('PingMe'),
-          backgroundColor: Colors.blue,
-          centerTitle: true,
-        ),
-        //GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
-        body: Stack(
-          children: [
-            GoogleMap(
-              markers: Set<Marker>.of(markers.values),
-              onMapCreated: _onMapCreated,
-              initialCameraPosition: CameraPosition(
-                target: initcamposition,
-                zoom: 1.0,
-              ),
-              zoomControlsEnabled: false,
-              myLocationButtonEnabled: false,
-              myLocationEnabled: true,
+    @override
+    Widget build(BuildContext context) {
+      return MaterialApp(
+        home: Scaffold(
+          //PING-ME APP HEADER
+          appBar: AppBar(
+            title: const Text('PingMe'),
+            backgroundColor: Colors.blue,
+            centerTitle: true,
+          ),
+
+          //GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
+          body: GoogleMap(
+            markers: Set<Marker>.of(markers.values),
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(
+              target: initcamposition,
+              zoom: 1.0,
             ),
-            Positioned(
-                top: 3.0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 5.0, horizontal: 6.0),
-                  decoration: BoxDecoration(
-                      color: Colors.lightBlue,
-                      borderRadius: BorderRadius.circular(20.0),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.white,
-                          offset: Offset(0, 2),
-                          blurRadius: 6.0,
-                        )
-                      ]),
-                  child: Text(
-                    'Last Ping: $currentTime',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ))
-          ],
-        ),
-        //FOOTER WITH FRIENDS, PING BUTTON, AND LOGOUT
-        bottomNavigationBar: BottomAppBar(
-          //footer navigation bar
-          shape: const CircularNotchedRectangle(), //navigation bar layout
-          notchMargin: 6.0,
-          color: Colors.blue,
-          child: Row(
-            children: [
-              IconButton(
-                //LOGOUT BUTTON
-                icon: const Icon(Icons.logout_rounded),
-                color: Colors.white,
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  setState(() {});
-                  Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const LoginPage()));
-                },
-              ),
-              const Spacer(),
-              //FRIENDS BUTTON
-              IconButton(
-                  icon: const Icon(Icons.perm_identity_outlined,
-                      color: Colors.white),
-                  onPressed: () {
-                    Navigator.push(
+            myLocationEnabled: true,
+          ),
+
+          //FOOTER WITH FRIENDS, PING BUTTON, AND LOGOUT
+          bottomNavigationBar: BottomAppBar(
+            //footer navigation bar
+            shape: const CircularNotchedRectangle(), //navigation bar layout
+            notchMargin: 6.0,
+            color: Colors.blue,
+            child: Row(
+              children: [
+                IconButton(
+                  //LOGOUT BUTTON
+                  icon: const Icon(Icons.logout_rounded),
+                  color: Colors.white,
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                    setState(() {});
+                    Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const FriendsPage()));
-                  }),
-            ],
+                            builder: (context) => const LoginPage()));
+                  },
+                ),
+                const Spacer(),
+
+                //FRIENDS BUTTON
+                IconButton(
+                    icon: const Icon(Icons.perm_identity_outlined,
+                        color: Colors.white),
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const FriendsPage()));
+                    }),
+              ],
+            ),
           ),
+
+          //PING BUTTON
+          floatingActionButton: FloatingActionButton(
+            child: const Icon(Icons.public),
+            onPressed: () async {
+              setState(() {
+                if (toggleLocation == false) {
+                  toggleColor = Colors.green;
+                  toggleLocation = true;
+                }
+
+                else if (toggleLocation == true) {
+                  toggleColor = Colors.red;
+                  toggleLocation = false;
+                }
+              });
+            },
+
+            backgroundColor: toggleColor,
+          ),
+          floatingActionButtonLocation: FloatingActionButtonLocation
+              .centerDocked,
         ),
-        //PING BUTTON
-        floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.public),
-          onPressed: () async {
-            setState(() {
-              if (toggleLocation == false) {
-                toggleColor = Colors.green;
-                toggleLocation = true;
-              } else if (toggleLocation == true) {
-                toggleColor = Colors.red;
-                toggleLocation = false;
-              }
-            });
-          },
-          backgroundColor: toggleColor,
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      ),
-    );
+      );
+    }
   }
-}
