@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:pingme/friends.dart';
@@ -23,26 +22,22 @@ class HomeState extends State<HomePage> {
   final firestoreinstance = FirebaseFirestore.instance;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
   Timer? timer;
+  bool toggleLocation = false;
+  Color toggleColor = Colors.red;
 
   @override
   void initState() {
     getMarkerData();
     super.initState();
     timer = Timer.periodic(
-        const Duration(seconds: 10), (Timer t) => getMarkerData());
-  }
-
-  //FETCH USER POSITION
-  Future<Position> _getGeoLocationPosition() async {
-    return Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+        const Duration(seconds: 5), (Timer t) => getMarkerData());
+    timer = Timer.periodic(
+        const Duration(seconds: 5), (Timer t) => updateLocationHistory());
   }
 
   //COLLECT AND PROCESS ALL USERS IN FIREBASE FOR CREATING MARKERS
-  getMarkerData() async {
-    // setState(() {
+  void getMarkerData() async {
     // Looking for users from the friends list
-    markers = <MarkerId, Marker>{};
     FirebaseFirestore.instance
         .collection('userEmails')
         .doc(_uid)
@@ -58,31 +53,36 @@ class HomeState extends State<HomePage> {
                 .doc(friendUid)
                 .get()
                 .then((userData) {
-              initMarker(userData.data(), userData.id);
+              initMarker(userData.data(), friendUid);
             });
           }
         }
       }
     });
-    // });
   }
 
   //CREATE MARKER BASED OFF OF USER DATA IN FIREBASE
-  void initMarker(specify, specifyId) async {
+  void initMarker(userDoc, userId) async {
     setState(() {
-      var markeridvalue = specifyId;
-      final MarkerId markerId = MarkerId(markeridvalue);
       //create marker with user location, username, and time
-      final Marker marker = Marker(
-        markerId: markerId,
-        position:
-            LatLng(specify['location'].latitude, specify['location'].longitude),
-        infoWindow: InfoWindow(
-            title: specify['username'],
-            snippet: specify['time'].toDate().toString()),
-      );
-      //push marker into Map array for displaying in Google Maps
-      markers[markerId] = marker;
+      if (userDoc.containsKey('locationHistory')) {
+        int index = 0;
+        for (var element in userDoc['locationHistory']) {
+          String markerIdString = userId + index.toString();
+          MarkerId locationId = MarkerId(markerIdString);
+          // MarkerId(element.latitude.toString() + element.longitude);
+          final Marker marker = Marker(
+            markerId: locationId,
+            position: LatLng(element.latitude, element.longitude),
+            infoWindow: InfoWindow(
+                title: userDoc['username'] + ': ' + (index + 1).toString(),
+                snippet: userDoc['timeHistory'][index].toDate().toString()),
+          );
+          //push marker into Map array for displaying in Google Maps
+          markers[locationId] = marker;
+          index++;
+        }
+      }
     });
   }
 
@@ -104,6 +104,56 @@ class HomeState extends State<HomePage> {
     });
   }
 
+  Future<void> updateLocationHistory() async {
+    if (toggleLocation == true) {
+      List<GeoPoint> locationHistory = <GeoPoint>[];
+      List<Timestamp> timeHistory = <Timestamp>[];
+
+      // Getting the current location history from firestore
+      await FirebaseFirestore.instance
+          .collection('userEmails')
+          .doc(_uid)
+          .get()
+          .then((userData) {
+        if (userData.data()!.containsKey('locationHistory')) {
+          for (var element in List.from(userData.data()!['locationHistory'])) {
+            locationHistory.add(element);
+          }
+        }
+        if (userData.data()!.containsKey('timeHistory')) {
+          for (var element in List.from(userData.data()!['timeHistory'])) {
+            timeHistory.add(element);
+          }
+        }
+      });
+
+      // Popping off the oldest entry
+      if (locationHistory.length > 9) {
+        locationHistory.removeLast();
+      }
+      if (timeHistory.length > 9) {
+        timeHistory.removeLast();
+      }
+
+      // Adding current location and time to list
+      Position curPos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      locationHistory.insert(0, GeoPoint(curPos.latitude, curPos.longitude));
+      timeHistory.insert(0, Timestamp.now());
+
+      // Pushing the lists to the database
+      if (FirebaseAuth.instance.currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('userEmails')
+            .doc(_uid)
+            .update({
+          'locationHistory': locationHistory,
+          'timeHistory': timeHistory,
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -117,9 +167,7 @@ class HomeState extends State<HomePage> {
 
         //GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
         body: GoogleMap(
-          markers: Set<Marker>.of(markers
-              .values), // <-- Another way to fetch markers, maybe better???
-          //markers: markers.values.toSet(),
+          markers: Set<Marker>.of(markers.values),
           onMapCreated: _onMapCreated,
           initialCameraPosition: CameraPosition(
             target: initcamposition,
@@ -167,33 +215,20 @@ class HomeState extends State<HomePage> {
 
         //PING BUTTON
         floatingActionButton: FloatingActionButton(
-            child: const Icon(Icons.public),
-            onPressed: () async {
-              Position geoPosition = await _getGeoLocationPosition();
-              var firebaseUser = FirebaseAuth.instance.currentUser;
-              if (firebaseUser != null) {
-                await firestoreinstance
-                    .collection("userEmails")
-                    .doc(firebaseUser.uid)
-                    .update({
-                  'location':
-                      GeoPoint(geoPosition.latitude, geoPosition.longitude),
-                  'time': Timestamp.now(),
-                });
+          child: const Icon(Icons.public),
+          onPressed: () async {
+            setState(() {
+              if (toggleLocation == false) {
+                toggleColor = Colors.green;
+                toggleLocation = true;
+              } else if (toggleLocation == true) {
+                toggleColor = Colors.red;
+                toggleLocation = false;
               }
-              showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                          title: const Text('Current Location'),
-                          content: Text(
-                              "LAT: ${geoPosition.latitude}, LNG: ${geoPosition.longitude}"),
-                          actions: [
-                            TextButton(
-                              child: const Text('OK'),
-                              onPressed: () => Navigator.pop(context),
-                            )
-                          ]));
-            }),
+            });
+          },
+          backgroundColor: toggleColor,
+        ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
     );

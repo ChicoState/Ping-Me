@@ -11,7 +11,6 @@ class FriendsRequests extends StatefulWidget {
 
 class _FriendsRequestsState extends State<FriendsRequests> {
   final _uid = FirebaseAuth.instance.currentUser!.uid;
-  late var requestDocs;
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +34,9 @@ class _FriendsRequestsState extends State<FriendsRequests> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasData) {
-                requestDocs = snapshot.data?.docs;
+                var requestDocs = snapshot.data?.docs;
                 return ListView.separated(
-                    itemCount: requestDocs.length,
+                    itemCount: requestDocs!.length,
                     separatorBuilder: (context, index) => const Divider(),
                     itemBuilder: (context, index) {
                       return ListTile(

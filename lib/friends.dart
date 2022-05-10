@@ -11,7 +11,6 @@ class FriendsPage extends StatefulWidget {
 }
 
 class _FriendsPageState extends State<FriendsPage> {
-  late var friendsDocs;
   final emailController = TextEditingController();
   bool _incompleteForm = false;
   bool _friendDoesNotExist = false;
@@ -65,9 +64,9 @@ class _FriendsPageState extends State<FriendsPage> {
             }
             // BUILDING FRIENDS LIST
             if (snapshot.hasData) {
-              friendsDocs = snapshot.data?.docs;
+              var friendsDocs = snapshot.data?.docs;
               return ListView.separated(
-                  itemCount: friendsDocs.length,
+                  itemCount: friendsDocs!.length,
                   separatorBuilder: (context, index) => const Divider(),
                   itemBuilder: (context, index) {
                     // FRIEND TILE
