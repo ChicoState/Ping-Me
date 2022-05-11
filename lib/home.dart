@@ -24,7 +24,9 @@ class HomeState extends State<HomePage> {
   Timer? timer;
   bool toggleLocation = false;
   Color toggleColor = Colors.red;
+  bool allowTracking = false;
   var currentTime;
+
   @override
   void initState() {
     getMarkerData();
@@ -133,6 +135,14 @@ class HomeState extends State<HomePage> {
           title: const Text('PingMe'),
           backgroundColor: Colors.blue,
           centerTitle: true,
+          actions: [
+            Switch(
+                activeColor: Colors.white,
+                value: allowTracking,
+                onChanged: (value) => setState(() {
+                      allowTracking = value;
+                    }))
+          ],
         ),
         //GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
         body: Stack(
@@ -211,10 +221,10 @@ class HomeState extends State<HomePage> {
           onPressed: () async {
             setState(() {
               if (toggleLocation == false) {
-                toggleColor = Colors.green;
+                toggleColor = Colors.red;
                 toggleLocation = true;
               } else if (toggleLocation == true) {
-                toggleColor = Colors.red;
+                toggleColor = Colors.green;
                 toggleLocation = false;
               }
             });
