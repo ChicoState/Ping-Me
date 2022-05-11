@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -24,7 +25,6 @@ class HomeState extends State<HomePage> {
   Timer? timer;
   bool toggleLocation = false;
   Color toggleColor = Colors.red;
-  bool allowTracking = false;
   var currentTime;
 
   @override
@@ -34,17 +34,11 @@ class HomeState extends State<HomePage> {
     timer = Timer.periodic(
         const Duration(seconds: 5), (Timer t) => getMarkerData());
     timer = Timer.periodic(
-        const Duration(seconds: 5), (Timer t) => updateLocation());
-  }
-
-  //FETCH USER POSITION
-  Future<Position> _getGeoLocationPosition() async {
-    return Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+        const Duration(seconds: 5), (Timer t) => updateLocationHistory());
   }
 
   //COLLECT AND PROCESS ALL USERS IN FIREBASE FOR CREATING MARKERS
-  getMarkerData() async {
+  void getMarkerData() async {
     // setState(() {
     // Looking for users from the friends list
     markers = <MarkerId, Marker>{};
@@ -109,18 +103,51 @@ class HomeState extends State<HomePage> {
     });
   }
 
-  void updateLocation() async {
+  Future<void> updateLocationHistory() async {
     if (toggleLocation == true) {
-      Position geoPosition = await _getGeoLocationPosition();
-      var firebaseUser = FirebaseAuth.instance.currentUser;
-      currentTime = Timestamp.now().toDate().toString();
-      if (firebaseUser != null) {
-        await firestoreinstance
-            .collection("userEmails")
-            .doc(firebaseUser.uid)
+      List<GeoPoint> locationHistory = <GeoPoint>[];
+      List<Timestamp> timeHistory = <Timestamp>[];
+
+      // Getting the current location history from firestore
+      await FirebaseFirestore.instance
+          .collection('userEmails')
+          .doc(_uid)
+          .get()
+          .then((userData) {
+        if (userData.data()!.containsKey('locationHistory')) {
+          for (var element in List.from(userData.data()!['locationHistory'])) {
+            locationHistory.add(element);
+          }
+        }
+        if (userData.data()!.containsKey('timeHistory')) {
+          for (var element in List.from(userData.data()!['timeHistory'])) {
+            timeHistory.add(element);
+          }
+        }
+      });
+
+      // Popping off the oldest entry
+      if (locationHistory.length > 9) {
+        locationHistory.removeLast();
+      }
+      if (timeHistory.length > 9) {
+        timeHistory.removeLast();
+      }
+
+      // Adding current location and time to list
+      Position curPos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      locationHistory.insert(0, GeoPoint(curPos.latitude, curPos.longitude));
+      timeHistory.insert(0, Timestamp.now());
+
+      // Pushing the lists to the database
+      if (FirebaseAuth.instance.currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('userEmails')
+            .doc(_uid)
             .update({
-          'location': GeoPoint(geoPosition.latitude, geoPosition.longitude),
-          'time': Timestamp.now(),
+          'locationHistory': locationHistory,
+          'timeHistory': timeHistory,
         });
       }
     }
@@ -135,51 +162,43 @@ class HomeState extends State<HomePage> {
           title: const Text('PingMe'),
           backgroundColor: Colors.blue,
           centerTitle: true,
-          actions: [
-            Switch(
-                activeColor: Colors.white,
-                value: allowTracking,
-                onChanged: (value) => setState(() {
-                      allowTracking = value;
-                    }))
-          ],
         ),
-        //GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
-        body: Stack(
-          children: [
-            GoogleMap(
-              markers: Set<Marker>.of(markers.values),
-              onMapCreated: _onMapCreated,
-              initialCameraPosition: CameraPosition(
-                target: initcamposition,
-                zoom: 1.0,
-              ),
-              zoomControlsEnabled: false,
-              myLocationButtonEnabled: false,
-              myLocationEnabled: true,
-            ),
-            Positioned(
-                top: 3.0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 5.0, horizontal: 6.0),
-                  decoration: BoxDecoration(
-                      color: Colors.lightBlue,
-                      borderRadius: BorderRadius.circular(20.0),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.white,
-                          offset: Offset(0, 2),
-                          blurRadius: 6.0,
-                        )
-                      ]),
-                  child: Text(
-                    'Last Ping: $currentTime',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ))
-          ],
-        ),
+//GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
+body: Stack(
+children: [
+GoogleMap(
+markers: Set<Marker>.of(markers.values),
+onMapCreated: _onMapCreated,
+initialCameraPosition: CameraPosition(
+target: initcamposition,
+zoom: 1.0,
+),
+zoomControlsEnabled: false,
+myLocationButtonEnabled: false,
+myLocationEnabled: true,
+),
+Positioned(
+top: 3.0,
+child: Container(
+padding: const EdgeInsets.symmetric(
+vertical: 5.0, horizontal: 6.0),
+decoration: BoxDecoration(
+color: Colors.lightBlue,
+borderRadius: BorderRadius.circular(20.0),
+boxShadow: const [
+BoxShadow(
+color: Colors.white,
+offset: Offset(0, 2),
+blurRadius: 6.0,
+)
+]),
+child: Text(
+'Last Ping: $currentTime',
+style: const TextStyle(color: Colors.white),
+),
+))
+],
+),
         //FOOTER WITH FRIENDS, PING BUTTON, AND LOGOUT
         bottomNavigationBar: BottomAppBar(
           //footer navigation bar
@@ -202,6 +221,7 @@ class HomeState extends State<HomePage> {
                 },
               ),
               const Spacer(),
+
               //FRIENDS BUTTON
               IconButton(
                   icon: const Icon(Icons.perm_identity_outlined,
@@ -215,16 +235,17 @@ class HomeState extends State<HomePage> {
             ],
           ),
         ),
+
         //PING BUTTON
         floatingActionButton: FloatingActionButton(
           child: const Icon(Icons.public),
           onPressed: () async {
             setState(() {
               if (toggleLocation == false) {
-                toggleColor = Colors.red;
+                toggleColor = Colors.green;
                 toggleLocation = true;
               } else if (toggleLocation == true) {
-                toggleColor = Colors.green;
+                toggleColor = Colors.red;
                 toggleLocation = false;
               }
             });
