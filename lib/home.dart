@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -24,6 +25,7 @@ class HomeState extends State<HomePage> {
   Timer? timer;
   bool toggleLocation = false;
   Color toggleColor = Colors.red;
+  var currentTime;
 
   @override
   void initState() {
@@ -161,18 +163,42 @@ class HomeState extends State<HomePage> {
           backgroundColor: Colors.blue,
           centerTitle: true,
         ),
-
-        //GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
-        body: GoogleMap(
-          markers: Set<Marker>.of(markers.values),
-          onMapCreated: _onMapCreated,
-          initialCameraPosition: CameraPosition(
-            target: initcamposition,
-            zoom: 1.0,
-          ),
-          myLocationEnabled: true,
-        ),
-
+//GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
+body: Stack(
+children: [
+GoogleMap(
+markers: Set<Marker>.of(markers.values),
+onMapCreated: _onMapCreated,
+initialCameraPosition: CameraPosition(
+target: initcamposition,
+zoom: 1.0,
+),
+zoomControlsEnabled: false,
+myLocationButtonEnabled: false,
+myLocationEnabled: true,
+),
+Positioned(
+top: 3.0,
+child: Container(
+padding: const EdgeInsets.symmetric(
+vertical: 5.0, horizontal: 6.0),
+decoration: BoxDecoration(
+color: Colors.lightBlue,
+borderRadius: BorderRadius.circular(20.0),
+boxShadow: const [
+BoxShadow(
+color: Colors.white,
+offset: Offset(0, 2),
+blurRadius: 6.0,
+)
+]),
+child: Text(
+'Last Ping: $currentTime',
+style: const TextStyle(color: Colors.white),
+),
+))
+],
+),
         //FOOTER WITH FRIENDS, PING BUTTON, AND LOGOUT
         bottomNavigationBar: BottomAppBar(
           //footer navigation bar
