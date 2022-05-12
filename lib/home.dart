@@ -39,9 +39,7 @@ class HomeState extends State<HomePage> {
 
   //COLLECT AND PROCESS ALL USERS IN FIREBASE FOR CREATING MARKERS
   void getMarkerData() async {
-    // setState(() {
     // Looking for users from the friends list
-    markers = <MarkerId, Marker>{};
     FirebaseFirestore.instance
         .collection('userEmails')
         .doc(_uid)
@@ -57,31 +55,36 @@ class HomeState extends State<HomePage> {
                 .doc(friendUid)
                 .get()
                 .then((userData) {
-              initMarker(userData.data(), userData.id);
+              initMarker(userData.data(), friendUid);
             });
           }
         }
       }
     });
-    // });
   }
 
   //CREATE MARKER BASED OFF OF USER DATA IN FIREBASE
-  void initMarker(specify, specifyId) async {
+  void initMarker(userDoc, userId) async {
     setState(() {
-      var markeridvalue = specifyId;
-      final MarkerId markerId = MarkerId(markeridvalue);
       //create marker with user location, username, and time
-      final Marker marker = Marker(
-        markerId: markerId,
-        position:
-            LatLng(specify['location'].latitude, specify['location'].longitude),
-        infoWindow: InfoWindow(
-            title: specify['username'],
-            snippet: specify['time'].toDate().toString()),
-      );
-      //push marker into Map array for displaying in Google Maps
-      markers[markerId] = marker;
+      if (userDoc.containsKey('locationHistory')) {
+        int index = 0;
+        for (var element in userDoc['locationHistory']) {
+          String markerIdString = userId + index.toString();
+          MarkerId locationId = MarkerId(markerIdString);
+          // MarkerId(element.latitude.toString() + element.longitude);
+          final Marker marker = Marker(
+            markerId: locationId,
+            position: LatLng(element.latitude, element.longitude),
+            infoWindow: InfoWindow(
+                title: userDoc['username'] + ': ' + (index + 1).toString(),
+                snippet: userDoc['timeHistory'][index].toDate().toString()),
+          );
+          //push marker into Map array for displaying in Google Maps
+          markers[locationId] = marker;
+          index++;
+        }
+      }
     });
   }
 
