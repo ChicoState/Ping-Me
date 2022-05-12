@@ -142,7 +142,9 @@ class HomeState extends State<HomePage> {
           desiredAccuracy: LocationAccuracy.high);
       locationHistory.insert(0, GeoPoint(curPos.latitude, curPos.longitude));
       timeHistory.insert(0, Timestamp.now());
-      currentTime = timeHistory[0].toDate().toString();
+      setState(() {
+        currentTime = timeHistory[0].toDate().toString();
+      });
 
       // Pushing the lists to the database
       if (FirebaseAuth.instance.currentUser != null) {
