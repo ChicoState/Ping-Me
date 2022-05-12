@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -24,8 +23,8 @@ class HomeState extends State<HomePage> {
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
   Timer? timer;
   bool toggleLocation = false;
-  Color toggleColor = Colors.red;
-  var currentTime;
+  Color toggleColor = Colors.green;
+  String? currentTime;
 
   @override
   void initState() {
@@ -40,6 +39,7 @@ class HomeState extends State<HomePage> {
   //COLLECT AND PROCESS ALL USERS IN FIREBASE FOR CREATING MARKERS
   void getMarkerData() async {
     // Looking for users from the friends list
+    markers = <MarkerId, Marker>{};
     FirebaseFirestore.instance
         .collection('userEmails')
         .doc(_uid)
@@ -67,7 +67,7 @@ class HomeState extends State<HomePage> {
   void initMarker(userDoc, userId) async {
     setState(() {
       //create marker with user location, username, and time
-      if (userDoc.containsKey('locationHistory')) {
+      if (userDoc.containsKey('locationHistory') && userDoc['allowTracking']) {
         int index = 0;
         for (var element in userDoc['locationHistory']) {
           String markerIdString = userId + index.toString();
@@ -142,6 +142,7 @@ class HomeState extends State<HomePage> {
           desiredAccuracy: LocationAccuracy.high);
       locationHistory.insert(0, GeoPoint(curPos.latitude, curPos.longitude));
       timeHistory.insert(0, Timestamp.now());
+      currentTime = timeHistory[0].toDate().toString();
 
       // Pushing the lists to the database
       if (FirebaseAuth.instance.currentUser != null) {
@@ -165,43 +166,115 @@ class HomeState extends State<HomePage> {
           title: const Text('PingMe'),
           backgroundColor: Colors.blue,
           centerTitle: true,
+          actions: [
+            // ALLOW TRACKING TOGGLE
+            StreamBuilder(
+              stream: FirebaseFirestore.instance
+                  .collection('userEmails')
+                  .doc(_uid)
+                  .snapshots(),
+              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                if (snapshot.hasData) {
+                  return Switch(
+                      activeColor: Colors.white,
+                      value: snapshot.data['allowTracking'],
+                      onChanged: (value) {
+                        FirebaseFirestore.instance
+                            .collection('userEmails')
+                            .doc(_uid)
+                            .update({'allowTracking': value});
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              Future.delayed(const Duration(seconds: 3), () {
+                                Navigator.of(context).pop(true);
+                              });
+                              if (value) {
+                                return AlertDialog(
+                                  title: RichText(
+                                    text: const TextSpan(
+                                        style: TextStyle(
+                                            fontSize: 20, color: Colors.black),
+                                        children: <TextSpan>[
+                                          TextSpan(
+                                              text: 'Tracking is now turned '),
+                                          TextSpan(
+                                              text: 'on',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold))
+                                        ]),
+                                  ),
+                                  content: const Text(
+                                      'Your friends can now see your previous locations.'),
+                                );
+                              } else {
+                                return AlertDialog(
+                                  title: RichText(
+                                    text: const TextSpan(
+                                        style: TextStyle(
+                                            fontSize: 20, color: Colors.black),
+                                        children: <TextSpan>[
+                                          TextSpan(
+                                              text: 'Tracking is now turned '),
+                                          TextSpan(
+                                              text: 'off',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold))
+                                        ]),
+                                  ),
+                                  content: const Text(
+                                      'Your friends cannot see your previous locations.'),
+                                );
+                              }
+                            });
+                      });
+                }
+                return const Switch(
+                  value: false,
+                  onChanged: null,
+                );
+              },
+            ),
+          ],
         ),
-//GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
-body: Stack(
-children: [
-GoogleMap(
-markers: Set<Marker>.of(markers.values),
-onMapCreated: _onMapCreated,
-initialCameraPosition: CameraPosition(
-target: initcamposition,
-zoom: 1.0,
-),
-zoomControlsEnabled: false,
-myLocationButtonEnabled: false,
-myLocationEnabled: true,
-),
-Positioned(
-top: 3.0,
-child: Container(
-padding: const EdgeInsets.symmetric(
-vertical: 5.0, horizontal: 6.0),
-decoration: BoxDecoration(
-color: Colors.lightBlue,
-borderRadius: BorderRadius.circular(20.0),
-boxShadow: const [
-BoxShadow(
-color: Colors.white,
-offset: Offset(0, 2),
-blurRadius: 6.0,
-)
-]),
-child: Text(
-'Last Ping: $currentTime',
-style: const TextStyle(color: Colors.white),
-),
-))
-],
-),
+        //GOOGLE MAPS GUI, WITH MARKERS AND USER LOCATION
+        body: Stack(
+          children: [
+            GoogleMap(
+              markers: Set<Marker>.of(markers.values),
+              onMapCreated: _onMapCreated,
+              initialCameraPosition: CameraPosition(
+                target: initcamposition,
+                zoom: 1.0,
+              ),
+              zoomControlsEnabled: false,
+              myLocationButtonEnabled: true,
+              myLocationEnabled: true,
+            ),
+            (currentTime != null)
+                ? Positioned(
+                    top: 3.0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 5.0, horizontal: 6.0),
+                      decoration: BoxDecoration(
+                          color: Colors.lightBlue,
+                          borderRadius: BorderRadius.circular(20.0),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.white,
+                              offset: Offset(0, 2),
+                              blurRadius: 6.0,
+                            )
+                          ]),
+                      child: Text(
+                        'Last Ping: $currentTime',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ))
+                : const SizedBox.shrink()
+          ],
+        ),
         //FOOTER WITH FRIENDS, PING BUTTON, AND LOGOUT
         bottomNavigationBar: BottomAppBar(
           //footer navigation bar
@@ -244,11 +317,18 @@ style: const TextStyle(color: Colors.white),
           child: const Icon(Icons.public),
           onPressed: () async {
             setState(() {
-              if (toggleLocation == false) {
-                toggleColor = Colors.green;
-                toggleLocation = true;
-              } else if (toggleLocation == true) {
+              // Turning on location
+              if (!toggleLocation) {
                 toggleColor = Colors.red;
+                toggleLocation = true;
+                FirebaseFirestore.instance
+                    .collection('userEmails')
+                    .doc(_uid)
+                    .update({
+                  'allowTracking': true,
+                });
+              } else {
+                toggleColor = Colors.green;
                 toggleLocation = false;
               }
             });
