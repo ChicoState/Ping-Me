@@ -291,7 +291,6 @@ class HomeState extends State<HomePage> {
                 color: Colors.white,
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
-                  setState(() {});
                   Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(

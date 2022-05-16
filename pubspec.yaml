@@ -52,8 +52,11 @@ dependencies:
   geoflutterfire: ^3.0.3
   rxdart: ^0.27.3
   dart_code_metrics: ^4.15.0
+  # coverage: ^1.2.9
 
 dev_dependencies:
+  integration_test:
+    sdk: flutter
   flutter_test:
     sdk: flutter
 

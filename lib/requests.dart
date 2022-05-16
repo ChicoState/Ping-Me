@@ -35,6 +35,7 @@ class _FriendsRequestsState extends State<FriendsRequests> {
               }
               if (snapshot.hasData) {
                 var requestDocs = snapshot.data?.docs;
+
                 return ListView.separated(
                     itemCount: requestDocs!.length,
                     separatorBuilder: (context, index) => const Divider(),
