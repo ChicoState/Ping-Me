@@ -4,7 +4,7 @@ import 'authentication/firebase_options.dart';
 import 'package:pingme/authentication/login.dart';
 
 // CSCI 430: pingme
-// Names: Jorge Munoz,
+// Names: Jorge Munoz, Cole Hopkins, Crispin Gutierrez, Braulio Viveros
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
