@@ -149,7 +149,6 @@ class _SignUpPageState extends State<SignUpPage> {
                                 'allowTracking': false,
                               });
                             }
-                            setState(() {});
                             Navigator.pop(context);
                           } on FirebaseAuthException catch (e) {
                             if (e.code == 'weak-password') {
@@ -163,7 +162,6 @@ class _SignUpPageState extends State<SignUpPage> {
                           }
                         } else {
                           // PASSWORD MISMATCH
-                          setState(() {});
                         }
                       },
                       child: const Text('Sign Up',
