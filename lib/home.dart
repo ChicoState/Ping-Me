@@ -31,9 +31,9 @@ class HomeState extends State<HomePage> {
     getMarkerData();
     super.initState();
     timer = Timer.periodic(
-        const Duration(seconds: 5), (Timer t) => getMarkerData());
+        const Duration(seconds: 10), (Timer t) => getMarkerData());
     timer = Timer.periodic(
-        const Duration(seconds: 5), (Timer t) => updateLocationHistory());
+        const Duration(seconds: 10), (Timer t) => updateLocationHistory());
   }
 
   //COLLECT AND PROCESS ALL USERS IN FIREBASE FOR CREATING MARKERS
